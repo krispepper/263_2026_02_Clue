@@ -53,7 +53,7 @@ def add_game_run(conn):
     grid = input("Enter Official Grid: ").strip()
 
     query = """
-        INSERT INTO GameRun (Start, End, Won, Status, Score, DiceRoll, OfficialGrid)
+        INSERT INTO Gamerun (Start, End, Won, Status, Score, DiceRoll, OfficialGrid)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
 
@@ -70,9 +70,9 @@ def add_game_run(conn):
 def change_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
-    start = input("Enter Start datetime of the GameRun to update: ").strip()
+    start = input("Enter Start datetime of the Gamerun to update: ").strip()
 
-    cur.execute("SELECT * FROM GameRun WHERE Start = %s", (start,))
+    cur.execute("SELECT * FROM Gamerun WHERE Start = %s", (start,))
     row = cur.fetchone()
 
     if not row:
@@ -111,7 +111,7 @@ def change_game_run(conn):
     field = field_map[choice]
     new_value = input(f"Enter new value for {field}: ").strip()
 
-    query = f"UPDATE GameRun SET {field} = %s WHERE Start = %s"
+    query = f"UPDATE Gamerun SET {field} = %s WHERE Start = %s"
 
     try:
         cur.execute(query, (new_value, start))
@@ -126,9 +126,9 @@ def change_game_run(conn):
 def delete_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
-    start = input("Enter Start datetime of GameRun to delete: ").strip()
+    start = input("Enter Start datetime of Gamerun to delete: ").strip()
 
-    query = "DELETE FROM GameRun WHERE Start = %s"
+    query = "DELETE FROM Gamerun WHERE Start = %s"
 
     try:
         cur.execute(query, (start,))
@@ -147,7 +147,7 @@ def delete_game_run(conn):
 def list_game_runs(conn):
     cur = conn.cursor(dictionary=True)
 
-    cur.execute("SELECT * FROM GameRun")
+    cur.execute("SELECT * FROM Gamerun")
     rows = cur.fetchall()
 
     if not rows:
@@ -169,7 +169,7 @@ def list_game_runs(conn):
 def update_game_score(conn):
     cur = conn.cursor(dictionary=True)
 
-    start = input("Enter Start datetime of GameRun: ").strip()
+    start = input("Enter Start datetime of Gamerun: ").strip()
     new_score = input("Enter new score: ").strip()
 
     try:

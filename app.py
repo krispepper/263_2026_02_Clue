@@ -1,4 +1,4 @@
-# author: Nikolaos Komninos 
+# author: Madeline, 
 # date: 4/19/2026
 # Purpose: 263 application to work with game DB
 #          connect to SQL 
@@ -18,24 +18,24 @@ from player_manager import (
 )
 
 #module to run queries
-from player_stats import (
-    player_stats_menu
+from gamestatus_manager import (
+    gamerun_manager_menu
 )
 
 # Establish connection to database (edit accordingly)
 conn = mysql.connector.connect(
     host="127.0.0.1",
     port=3306,
-    user="pepper",
+    user="madelinestaley",
     password="",
-    database="pepper",
+    database="madelinestaley",
 )
 
 def main():
     while True:
         print("\n=== Main Menu ===")
         print("1. Maintain Player")
-        print("2. Player Reports")
+        print("2. Monitor Game Run")
         print("3. Exit")
 
         choice = input("Enter your choice (1-3): ").strip()
@@ -44,7 +44,7 @@ def main():
             case "1":
                 player_manager_menu(conn)
             case "2":
-                player_stats_menu(conn)
+                gamerun_manager_menu(conn)
             case "3":
                 print("Goodbye!")
                 break
