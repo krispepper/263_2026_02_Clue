@@ -1,122 +1,186 @@
-# author: Nikolaos Komninos 
-# date: 4/19/2026
+# author: Maddy Staley 
+# date: 4/25/2026
 # Purpose: present a menu to manage a table 
 #     add/update/delete/list the table
 # Changes by Kris Pepper
 
-def player_manager_menu(conn):
+def gamerun_manager_menu(conn):
     ''' This handles the menu of all the options to maintain the table
         You will be changing 'Player' to the name of your table. 
     args: 
         conn: Active MySQL database connection
     '''
-    print("\n--- Maintain Player ---")
-    print("1. Add Player")
-    print("2. Change Player")
-    print("3. Delete Player")
-    print("4. List Players")
-    print("5. Update Player Score (Stored Procedure)")
+    print("\n--- Game Run ---")
+    print("1. Game Start")
+    print("2. Game End")
+    print("3. Games Won")
+    print("4. Game Score")
+    print("5. Dice Roll")
+    print("6. Grid Fufillment")
+    print("7. Current Game Run Status")
 
-    subchoice = input("Enter your choice (1-5): ").strip()
+    subchoice = input("Enter your choice (1-7): ").strip()
 
     match subchoice:
         case "1":
-            add_player(conn)
+            add_game_run(conn)            #
         case "2":
-            change_player(conn)
+            delete_game_run(conn)         
         case "3":
-            delete_player(conn)
+            list_game_runs(conn)          
         case "4":
-            list_players(conn)
+            update_game_score(conn)       
         case "5":
-            update_player_score(conn)
+            change_game_run(conn)         
+        case "6":
+            update_game_run(conn)         
+        case "7":
+            update_game_run(conn)         
         case _:
-            print("Invalid choice. Please try again.")
+            print("Invalid choice.")
+           
 
-def add_player(conn):
-    """Add a new player to the database. 
-       You will add a new record to your table
-    Args:
-        conn: Active MySQL database connection
+def add_game_run(conn):
+    cur = conn.cursor(dictionary=True)
+
+    print("\n--- Start New Game Run ---")
+    start = input("Enter Start datetime (YYYY-MM-DD HH:MM:SS): ").strip()
+    end = input("Enter End datetime (YYYY-MM-DD HH:MM:SS): ").strip()
+    won = input("Enter Won (0 or 1): ").strip()
+    status = input("Enter Status: ").strip()
+    score = input("Enter Score: ").strip()
+    dice = input("Enter Dice Roll: ").strip()
+    grid = input("Enter Official Grid: ").strip()
+
+    query = """
+        INSERT INTO GameRun (Start, End, Won, Status, Score, DiceRoll, OfficialGrid)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-    # Create a cursor with dictionary=True
-    # Prompt user for: Player ID, Name, Color, Wins, Losses, Gold
-    #  You will prompt the user for the values you need to insert
-    # Write INSERT query to add a new record
-    # Commit the transaction
-    # Check for success and Print success message
-    # Close the cursor
-    pass
+
+    try:
+        cur.execute(query, (start, end, won, status, score, dice, grid))
+        conn.commit()
+        print("Game Run started successfully.")
+    except Exception as e:
+        print("Error starting game run:", e)
+
+    cur.close()
 
 
-def change_player(conn):
-    """Update player information in database.
+def change_game_run(conn):
+    cur = conn.cursor(dictionary=True)
 
-    Args:
-        conn: Active MySQL database connection
-    """
-    # Create a cursor with dictionary=True
-    # Prompt user for Player ID to change
-    # Write SELECT query to fetch player data
-    # If player not found, print message and return
-    # Display current player data
-    # Print menu of fields to change (1-5):
-    #   1. Name
-    #   2. Color
-    #   3. Wins
-    #   4. Losses
-    #   5. Gold
-    # Prompt user for field choice
-    # If invalid choice, print message and return
-    # Map choice to field name using a dictionary
-    # Prompt user for new value for selected field
-    # Write UPDATE query to modify only that field
-    # Commit the transaction
-    # Check for success and Print success message
-    # Close the cursor
-    pass
+    start = input("Enter Start datetime of the GameRun to update: ").strip()
 
+    cur.execute("SELECT * FROM GameRun WHERE Start = %s", (start,))
+    row = cur.fetchone()
 
-def delete_player(conn):
-    """Delete a player from the database.
+    if not row:
+        print("Game Run not found.")
+        cur.close()
+        return
 
-    Args:
-        conn: Active MySQL database connection
-    """
-    # Create a cursor with dictionary=True
-    # Prompt user for Player ID to delete
-    # Write DELETE query to remove the player
-    # Commit the transaction
-    # Check for success and Print deletion message
-    # Close the cursor
-    pass
+    print("\nCurrent Game Run Data:")
+    for key, value in row.items():
+        print(f"{key}: {value}")
 
+    print("\nWhat would you like to update?")
+    print("1. End")
+    print("2. Won")
+    print("3. Status")
+    print("4. Score")
+    print("5. DiceRoll")
+    print("6. OfficialGrid")
 
-def list_players(conn):
-    """List all players in the database.
+    choice = input("Enter choice (1-6): ").strip()
 
-    Args:
-        conn: Active MySQL database connection
-    """
-    # Create a cursor with dictionary=True
-    # Write SELECT query to fetch all players
-    # If no players found, print message and return
-    # Print header row with column names
-    # Loop through results and print each player
-    # Close the cursor
-    pass
+    field_map = {
+        "1": "End",
+        "2": "Won",
+        "3": "Status",
+        "4": "Score",
+        "5": "DiceRoll",
+        "6": "OfficialGrid"
+    }
+
+    if choice not in field_map:
+        print("Invalid choice.")
+        cur.close()
+        return
+
+    field = field_map[choice]
+    new_value = input(f"Enter new value for {field}: ").strip()
+
+    query = f"UPDATE GameRun SET {field} = %s WHERE Start = %s"
+
+    try:
+        cur.execute(query, (new_value, start))
+        conn.commit()
+        print(f"{field} updated successfully.")
+    except Exception as e:
+        print("Error updating game run:", e)
+
+    cur.close()
 
 
-def update_player_score(conn):
-    """Update a player's wins using UpdatePlayerScore stored procedure.
+def delete_game_run(conn):
+    cur = conn.cursor(dictionary=True)
 
-    Args:
-        conn: Active MySQL database connection
-    """
-    # Create a cursor with dictionary=True
-    # Prompt user for Player ID and new number of wins
-    # Call the UpdatePlayerScore stored procedure using cur.callproc()
-    # Commit the transaction
-    # Print success message
-    # Close the cursor
-    pass
+    start = input("Enter Start datetime of GameRun to delete: ").strip()
+
+    query = "DELETE FROM GameRun WHERE Start = %s"
+
+    try:
+        cur.execute(query, (start,))
+        conn.commit()
+
+        if cur.rowcount > 0:
+            print("Game Run deleted.")
+        else:
+            print("Game Run not found.")
+    except Exception as e:
+        print("Error deleting game run:", e)
+
+    cur.close()
+
+
+def list_game_runs(conn):
+    cur = conn.cursor(dictionary=True)
+
+    cur.execute("SELECT * FROM GameRun")
+    rows = cur.fetchall()
+
+    if not rows:
+        print("No game runs found.")
+        cur.close()
+        return
+
+    print("\n--- All Game Runs ---")
+    print("Start | End | Won | Status | Score | DiceRoll | OfficialGrid")
+    print("-" * 80)
+
+    for row in rows:
+        print(f"{row['Start']} | {row['End']} | {row['Won']} | {row['Status']} | "
+              f"{row['Score']} | {row['DiceRoll']} | {row['OfficialGrid']}")
+
+    cur.close()
+
+
+def update_game_score(conn):
+    cur = conn.cursor(dictionary=True)
+
+    start = input("Enter Start datetime of GameRun: ").strip()
+    new_score = input("Enter new score: ").strip()
+
+    try:
+        cur.callproc("UpdateGameScore", (start, new_score))
+        conn.commit()
+        print("Game score updated successfully.")
+    except Exception as e:
+        print("Error calling stored procedure:", e)
+
+    cur.close()
+
+def update_game_run(conn):
+    print("\n--- Update Game Run (General) ---")
+    change_game_run(conn)

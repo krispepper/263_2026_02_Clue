@@ -1,8 +1,8 @@
-# author: Nikolaos Komninos 
-# date: 4/19/2026
+# author: Maddy Staley
+# date: 4/25/2026
 # Purpose: present a menu to manage a table 
 #     add/update/delete/list the table
-# Changes by Kris Pepper
+# 
 
 def player_manager_menu(conn):
     ''' This handles the menu of all the options to maintain the table
