@@ -18,7 +18,7 @@ from player_manager import (
 )
 
 #module to run queries
-from player_stats import (
+from player_status import (
     player_stats_menu
 )
 
