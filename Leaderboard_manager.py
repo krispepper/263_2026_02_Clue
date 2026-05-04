@@ -202,7 +202,7 @@ def ensure_update_rank_procedure(conn):
             print(f"Note: Stored procedure already exists or error: {e}")
     cur.close()
 
-
+'''
 def main():
     conn = mysql.connector.connect(
         host="127.0.0.1",

@@ -17,6 +17,11 @@ from player_manager import (
     player_manager_menu 
 )
 
+# module to manage a table for Deven
+from Leaderboard_manager import (
+    leaderboard_manager_menu
+ 
+
 #module to run queries
 from player_status import (
     player_stats_menu
@@ -26,7 +31,7 @@ from player_status import (
 conn = mysql.connector.connect(
     host="127.0.0.1",
     port=3306,
-    user="madelinestaley",
+    user="devenbernardin",
     password="",
     database="madelinestaley",
 )
@@ -36,9 +41,10 @@ def main():
         print("\n=== Main Menu ===")
         print("1. Maintain Player")
         print("2. Monitor Game Run")
-        print("3. Exit")
+        print("3. Maintain Leaderboard")
+        print("4. Exit")
 
-        choice = input("Enter your choice (1-3): ").strip()
+        choice = input("Enter your choice (1-4): ").strip()
 
         match choice:
             case "1":
