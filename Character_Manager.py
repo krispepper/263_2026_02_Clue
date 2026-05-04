@@ -23,6 +23,8 @@ def characters_manager_menu(conn):
             change_character(conn)
         case "3":
             delete_character(conn)
+        case "4":
+            list_characters(conn)
         case _:
             print("Invalid choice. Please try again.")
 
@@ -268,4 +270,30 @@ def delete_character(conn):
         print("An error occurred deleting character") 
     # Close the cursor
     cur.close()
-    pass
+
+def list_characters(conn):
+    """List all characters in the database.
+
+    Args:
+        conn: Active MySQL database connection
+    """
+    cur = conn.cursor(dictionary=True)
+    print("\n--- Character List ---")
+    cur.execute("SELECT CharacterName, CharacterRole, Age, Gender, Height, Coalesce(Routine, 'Currently unavailable') AS Routine FROM Characters")
+    characters = cur.fetchall()
+
+    if not characters:
+        print("No characters found.")
+        cur.close()
+        return
+
+    print(
+        f"\n{'CharacterName':<20} {'CharacterRole':<15} {'Age':<3} {'Gender':<2} {'Height':<5} {'Routine':<200}"
+    )
+    print("-" * 80)
+    for character in characters:
+        print(
+            f"{character['CharacterName']:<20} {character['CharacterRole']:<15} {character['Age']:<3} {character['Gender']:<2} {character['Height']:<5} {character['Routine']:<200}"
+        )
+
+    cur.close()
