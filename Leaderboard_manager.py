@@ -4,184 +4,218 @@
 #     add/update/delete/list the table
 # Changes by Kris Pepper
 
+import mysql.connector
 
 def leaderboard_manager_menu(conn):
-    print("\n--- Maintain Leaderboard ---")
-    print("1. Add Leaderboard Entry")
-    print("2. Change Leaderboard Entry")
-    print("3. Delete Leaderboard Entry")
-    print("4. List Leaderboard")
-    print("5. Update Leaderboard Score (Stored Procedure)")
+    ''' This handles the menu of all the options to maintain the table '''
+    while True:
+        print("\n--- Maintain Leaderboard ---")
+        print("1. Create (Add an Entry)")
+        print("2. Delete (Remove an Entry)")
+        print("3. Read (View the Leaderboard)")
+        print("4. Test the Stored Procedure (Update Rank)")
+        print("5. Update (Change Player Info)")
 
-    subchoice = input("Enter your choice (1-5): ").strip()
+        subchoice = input("Enter choice: ").strip()
 
-    match subchoice:
-        case "1":
-            add_leaderboard(conn)
-        case "2":
-            change_leaderboard(conn)
-        case "3":
-            delete_leaderboard(conn)
-        case "4":
-            list_leaderboard(conn)
-        case "5":
-            update_leaderboard_score(conn)
-        case _:
-            print("Invalid choice. Please try again.")
+        match subchoice:
+            case "1":
+                add_game_run(conn)
+            case "2":
+                delete_game_run(conn)
+            case "3":
+                list_game_runs(conn)
+            case "4":
+                update_game_score(conn)
+            case "5":
+                change_game_run(conn)
+            case _:
+                print("Invalid choice.")
 
-
-def add_leaderboard(conn):
-    """Add a new leaderboard entry.
-
-    Args:
-        conn: Active MySQL database connection
-    """
+def add_game_run(conn):
     cur = conn.cursor(dictionary=True)
-    print("\n--- Add Leaderboard Entry ---")
 
-    player_id = input("Enter Player ID: ")
-    score = input("Enter Score: ")
+    print("\n=== Add Leaderboard Entry ===")
+    player_id = input("Enter Player ID: ").strip()
+    username = input("Enter Username: ").strip() # Fixed: Added missing input
+    total_score = input("Enter Total Score: ").strip()
+    games_played = input("Enter Games Played: ").strip()
+    rank = input("Enter Rank: ").strip()
 
-    # ✅ YOUR ORIGINAL QUERY
-    cur.execute(
-        "INSERT INTO Leaderboard (PlayerID, Score) VALUES (%s, %s)",
-        (player_id, score),
-    )
+    query = """
+        INSERT INTO Leaderboard (PlayerID, Username, TotalScore, GamesPlayed, `Rank`)
+        VALUES (%s, %s, %s, %s, %s)
+    """
 
-    conn.commit()
-    print('rows inserted: ', cur.rowcount)
-
-    if cur.rowcount == 1:
-        print(f"Leaderboard entry for Player {player_id} added successfully!")
-    else:
-        print('An error occurred adding the leaderboard entry')
+    try:
+        cur.execute(query, (player_id, username, total_score, games_played, rank))
+        conn.commit()
+        print("Leaderboard entry added successfully.")
+    except Exception as e:
+        print("Error adding entry:", e)
 
     cur.close()
 
-
-def change_leaderboard(conn):
-    """Update leaderboard information in the database.
-
-    Args:
-        conn: Active MySQL database connection
-    """
+def change_game_run(conn):
     cur = conn.cursor(dictionary=True)
-    print("\n--- Change Leaderboard Entry ---")
 
-    player_id = input("Enter Player ID to change: ")
-
+    player_id = input("Enter Player ID to update: ").strip()
     cur.execute("SELECT * FROM Leaderboard WHERE PlayerID = %s", (player_id,))
-    record = cur.fetchone()
+    row = cur.fetchone()
 
-    if not record:
-        print("Record not found!")
+    if not row:
+        print("Player not found on the leaderboard.")
         cur.close()
         return
 
-    print(f"Current leaderboard data: {record}")
+    print("\nCurrent Leaderboard Entry:")
+    for key, value in row.items():
+        print(f"{key}: {value}")
+    
+    print("\nWhat would you like to update?")
+    print("1. Username")
+    print("2. Total Score")
+    print("3. Games Played")
+    print("4. Rank")
 
-    print("\nWhich field would you like to change?")
-    print("1. Score")
-
-    field_choice = input("Enter your choice: ")
+    choice = input("Select field to update: ").strip()
 
     field_map = {
-        "1": "Score",
+        "1": "Username",
+        "2": "TotalScore",
+        "3": "GamesPlayed",
+        "4": "Rank"
     }
 
-    if field_choice not in field_map:
-        print("Invalid choice!")
+    if choice not in field_map:
+        print("Invalid choice.")
+        cur.close()
+        return
+    
+    field = field_map[choice]
+    new_value = input("Enter new value: ").strip()
+
+    query = f"UPDATE Leaderboard SET `{field}` = %s WHERE PlayerID = %s"
+
+    try:
+        cur.execute(query, (new_value, player_id))
+        conn.commit()
+        print(f"{field} updated successfully.")
+    except Exception as e:
+        print("Error updating entry:", e)
+
+    cur.close()
+
+def delete_game_run(conn, clear_all=False):
+    cur = conn.cursor(dictionary=True)
+
+    if clear_all:
+        confirm = input("Clear ALL entries? (yes/no): ").strip().lower()
+        if confirm == "yes":
+            try:
+                cur.execute("DELETE FROM Leaderboard")
+                conn.commit()
+                print("Leaderboard cleared.")
+            except Exception as e:
+                print("Error clearing leaderboard:", e)
+    else:
+        player_id = input("Enter Player ID to delete: ").strip()
+        confirm = input("Confirm: ").strip().lower()
+        if confirm != "yes":
+            print("Delete cancelled.")
+            cur.close()
+            return
+        query = "DELETE FROM Leaderboard WHERE PlayerID = %s"
+        try:
+            cur.execute(query, (player_id,))
+            conn.commit()
+            if cur.rowcount > 0:
+                print("Entry deleted.")
+            else:
+                print("Player not found.")
+        except Exception as e:
+            print("Error deleting entry:", e)
+
+    cur.close()
+
+def list_game_runs(conn):
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT * FROM Leaderboard ORDER BY `Rank` ASC")
+    rows = cur.fetchall()
+
+    if not rows:
+        print("No entries found.")
         cur.close()
         return
 
-    field_name = field_map[field_choice]
-    new_value = input(f"Enter new {field_name} (current: {record[field_name]}): ")
+    print("\nRank | PlayerID | Username     | Total Score | Games Played")
+    print("----------------------------------------------------------------------")
+    for row in rows:
+        print(f"{row['Rank']}    | {row['PlayerID']}      | {row['Username']}  | {row['TotalScore']}        | {row['GamesPlayed']}")
+    cur.close()
 
+def update_game_score(conn):
+    cur = conn.cursor(dictionary=True)
+    player_id = input("Enter Player ID: ").strip()
+    new_rank = input("Enter new Rank: ").strip()
+
+    try:
+        cur.callproc("UpdatePlayerRank", (player_id, new_rank))
+        conn.commit()
+        print("Player rank updated successfully.")
+    except Exception as e:
+        print("Error calling stored procedure:", e)
+    cur.close()
+
+
+def ensure_leaderboard_table(conn):
+    cur = conn.cursor()
     cur.execute(
-        f"UPDATE Leaderboard SET {field_name} = %s WHERE PlayerID = %s",
-        (new_value, player_id),
+        """
+        CREATE TABLE IF NOT EXISTS Leaderboard (
+            PlayerID INT PRIMARY KEY,
+            Username VARCHAR(100),
+            TotalScore INT,
+            GamesPlayed INT,
+            `Rank` INT
+        )
+        """
     )
-
     conn.commit()
-    print('rows updated: ', cur.rowcount)
-
-    if cur.rowcount == 1:
-        print(f"Leaderboard {field_name} updated successfully!")
-    else:
-        print('An error occurred updating the leaderboard')
-
     cur.close()
 
 
-def delete_leaderboard(conn):
-    """Delete a leaderboard entry.
-
-    Args:
-        conn: Active MySQL database connection
-    """
-    cur = conn.cursor(dictionary=True)
-    print("\n--- Delete Leaderboard Entry ---")
-
-    player_id = input("Enter Player ID to delete: ")
-
-    cur.execute("DELETE FROM Leaderboard WHERE PlayerID = %s", (player_id,))
-    conn.commit()
-
-    print('rows updated: ', cur.rowcount)
-
-    if cur.rowcount == 1:
-        print(f"Leaderboard entry for Player {player_id} deleted!")
-    else:
-        print('An error occurred deleting the leaderboard entry')
-
+def ensure_update_rank_procedure(conn):
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            CREATE PROCEDURE IF NOT EXISTS UpdatePlayerRank(IN p_player_id INT, IN p_new_rank INT)
+            BEGIN
+                UPDATE Leaderboard SET `Rank` = p_new_rank WHERE PlayerID = p_player_id;
+            END
+            """
+        )
+        conn.commit()
+    except Exception as e:
+        if "already exists" not in str(e):
+            print(f"Note: Stored procedure already exists or error: {e}")
     cur.close()
 
 
-def list_leaderboard(conn):
-    """List all leaderboard entries.
-
-    Args:
-        conn: Active MySQL database connection
-    """
-    cur = conn.cursor(dictionary=True)
-    print("\n--- List Leaderboard ---")
-
-    cur.execute("SELECT * FROM Leaderboard")
-    records = cur.fetchall()
-
-    if not records:
-        print("No leaderboard entries found.")
-        cur.close()
-        return
-
-    print(f"\n{'PlayerID':<15} {'Score':<10}")
-    print("-" * 30)
-
-    for record in records:
-        print(f"{record['PlayerID']:<15} {record['Score']:<10}")
-
-    cur.close()
+def main():
+    conn = mysql.connector.connect(
+        host="127.0.0.1",
+        port=3306,
+        user="madelinestaley",
+        password="",
+        database="madelinestaley",
+    )
+    ensure_leaderboard_table(conn)
+    ensure_update_rank_procedure(conn)
+    leaderboard_manager_menu(conn)
+    conn.close()
 
 
-def update_leaderboard_score(conn):
-    """Update leaderboard score using the UpdateLeaderboardScore stored procedure.
-
-    Args:
-        conn: Active MySQL database connection
-    """
-    cur = conn.cursor(dictionary=True)
-    print("\n--- Update Leaderboard Score (Stored Procedure) ---")
-
-    player_id = input("Enter Player ID: ")
-    new_score = input("Enter new score: ")
-
-    cur.callproc("UpdateLeaderboardScore", (player_id, new_score))
-    conn.commit()
-
-    print(f"Leaderboard score updated to {new_score}!")
-
-    cur.close()
-
-    git add .
-git commit -m "Your commit message here"
-git push origin main
+if __name__ == "__main__":
+    main()
