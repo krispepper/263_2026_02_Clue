@@ -20,7 +20,7 @@ from player_manager import (
 # module to manage a table for Deven
 from Leaderboard_manager import (
     leaderboard_manager_menu
- 
+)
 
 #module to run queries
 from player_status import (
@@ -52,6 +52,8 @@ def main():
             case "2":
                 player_stats_menu(conn)
             case "3":
+                leaderboard_manager_menu(conn)
+            case "4":
                 print("Goodbye!")
                 break
             case _:
