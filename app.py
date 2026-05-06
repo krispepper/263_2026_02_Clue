@@ -13,8 +13,8 @@ import mysql.connector
 #    module to run their queries
 
 # module to manage a table
-from player_manager import (
-    player_manager_menu 
+from Character_Manager import (
+    characters_manager_menu
 )
 
 # module to manage a table for Deven
@@ -49,7 +49,7 @@ conn = mysql.connector.connect(
 def main():
     while True:
         print("\n=== Main Menu ===")
-        print("1. Maintain Player")
+        print("1. Maintain Characters")
         print("2. Monitor Game Run")
         print("3. Maintain Leaderboard")
         print("4. Game Run With Player Score Stats")
