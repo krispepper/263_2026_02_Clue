@@ -37,8 +37,8 @@ def query_score_connections(conn):
             p.CharacterName,
             p.Score,
             (SELECT COUNT(*) 
-             FROM Players p2 
-             WHERE p2.Score = p.Score) AS PlayersWithThisScore
+             FROM GamerunPlayers gp2 
+             WHERE gp2.PlayerNumber = p.PlayerNumber) AS GamesPlayed
         FROM Gamerun g
         LEFT OUTER JOIN GamerunPlayers gp 
             ON g.GameID = gp.GameID
@@ -47,23 +47,20 @@ def query_score_connections(conn):
         WHERE g.Status = 'Completed'
         GROUP BY 
             g.GameID, p.CharacterName, p.Score
-        HAVING 
-            (SELECT COUNT(*) 
-             FROM Players p2 
-             WHERE p2.Score = p.Score) > 1
-        ORDER BY p.Score;
+        HAVING COUNT(gp.PlayerNumber) >= 1
+        ORDER BY g.GameID, p.CharacterName;
     """
 
     cur.execute(query)
     rows = cur.fetchall()
 
-    print("\n--- Completed Games: Player Scores and Shared Score Counts ---")
-    print("GameID | CharacterName | Score | PlayersWithThisScore")
+    print("\n--- Completed Games: Character Names and Player Scores ---")
+    print("GameID | CharacterName | Score | GamesPlayed")
     print("-" * 75)
 
     for row in rows:
         print(f"{row['GameID']} | {row['CharacterName']} | "
-              f"{row['Score']} | {row['PlayersWithThisScore']}")
+              f"{row['Score']} | {row['GamesPlayed']}")
 
     cur.close()
 
