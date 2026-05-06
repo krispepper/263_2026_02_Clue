@@ -34,11 +34,12 @@ def query_score_connections(conn):
     query = """
         SELECT 
             g.GameID,
+            g.Status,
             p.CharacterName,
             p.Score,
             (SELECT COUNT(*) 
-             FROM GamerunPlayers gp2 
-             WHERE gp2.PlayerNumber = p.PlayerNumber) AS GamesPlayed
+             FROM Players p2 
+             WHERE p2.Score = p.Score) AS PlayersWithThisScore
         FROM Gamerun g
         LEFT OUTER JOIN GamerunPlayers gp 
             ON g.GameID = gp.GameID
@@ -46,7 +47,7 @@ def query_score_connections(conn):
             ON gp.PlayerNumber = p.PlayerNumber
         WHERE g.Status = 'Completed'
         GROUP BY 
-            g.GameID, p.CharacterName, p.Score
+            g.GameID, g.Status, p.CharacterName, p.Score
         HAVING COUNT(gp.PlayerNumber) >= 1
         ORDER BY g.GameID, p.CharacterName;
     """
@@ -54,13 +55,13 @@ def query_score_connections(conn):
     cur.execute(query)
     rows = cur.fetchall()
 
-    print("\n--- Completed Games: Character Names and Player Scores ---")
-    print("GameID | CharacterName | Score | GamesPlayed")
-    print("-" * 75)
+    print("\n--- Completed Games: Character Names, Scores, and Score Counts ---")
+    print("GameID | Status | CharacterName | Score | PlayersWithThisScore")
+    print("-" * 95)
 
     for row in rows:
-        print(f"{row['GameID']} | {row['CharacterName']} | "
-              f"{row['Score']} | {row['GamesPlayed']}")
+        print(f"{row['GameID']} | {row['Status']} | {row['CharacterName']} | "
+              f"{row['Score']} | {row['PlayersWithThisScore']}")
 
     cur.close()
 
