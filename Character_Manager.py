@@ -13,8 +13,11 @@ def characters_manager_menu(conn):
     print("2. Change Character")
     print("3. Delete Character")
     print("4. List Characters")
+    print("5. List Board Data")
+    print("6. List End game Results")
+    print("7. List player win/loss history")
 
-    subchoice = input("Enter your choice (1-4): ").strip()
+    subchoice = input("Enter your choice (1-5): ").strip()
 
     match subchoice:
         case "1":
@@ -25,6 +28,12 @@ def characters_manager_menu(conn):
             delete_character(conn)
         case "4":
             list_characters(conn)
+        case "5":
+            list_board_for_game(conn)
+        case "6":
+            list_end_game_results(conn)
+        case "7":
+            list_player_winloss_history(conn)
         case _:
             print("Invalid choice. Please try again.")
 
@@ -288,12 +297,111 @@ def list_characters(conn):
         return
 
     print(
-        f"\n{'CharacterName':<20} {'CharacterRole':<15} {'Age':<3} {'Gender':<2} {'Height':<5} {'Routine':<200}"
+        f"\n{'CharacterName':<20} {'CharacterRole':<15} {'Age':<3} {'Gender':<10} {'Height':<10} {'Routine':<200}"
     )
     print("-" * 80)
     for character in characters:
         print(
-            f"{character['CharacterName']:<20} {character['CharacterRole']:<15} {character['Age']:<3} {character['Gender']:<2} {character['Height']:<5} {character['Routine']:<200}"
+            f"{character['CharacterName']:<20} {character['CharacterRole']:<15} {character['Age']:<3} {character['Gender']:<10} {character['Height']:<10} {character['Routine']:<200}"
+        )
+
+    cur.close()
+
+def list_board_for_game(conn):
+    """ List the current board data for a given game """
+
+    # Ask for game number 
+    gameNumber = input("What is the game number you would like to see? ").strip()
+
+    # Activate cursor
+    cur = conn.cursor(dictionary=True)
+
+    print("\n--- TIles List With Players On Them ---")
+    cur.execute(f"SELECT Board.RoomID, Board.Tiles, COALESCE(GamerunPlayers.PlayerNumber, 'Vancant') AS PlayerNumber, \
+        COALESCE(CharacterName, '') AS CharacterName, COALESCE(GameID, '') AS GameID, RoomType FROM GamerunPlayers \
+        RIGHT JOIN Board on GamerunPlayers.RoomID = Board.RoomID \
+        AND GamerunPlayers.Tiles = Board.Tiles \
+        JOIN Room ON Board.RoomID = Room.RoomID \
+        LEFT JOIN Players ON GamerunPlayers.PlayerNumber = Players.PlayerNumber \
+        WHERE GameID IS NULL OR GameID = '{gameNumber}'")
+    characters = cur.fetchall()
+
+    if not characters:
+        print("No characters found.")
+        cur.close()
+        return
+    
+
+    print(
+        f"\n{'RoomID':<8} {'Tiles':<8} {'PlayerNumber':<14} {'CharacterName':<20} {'GameID':<8} {'RoomType':<20}"
+    )
+    print("-" * 80)
+    for character in characters:
+        print(
+            f"{character['RoomID']:<8} {character['Tiles']:<8} {character['PlayerNumber']:<14} {character['CharacterName']:<20} {character['GameID']:<8} {character['RoomType']:<20}"
+        )
+
+    cur.close()
+
+def list_end_game_results(conn):
+    # Activate cursor
+    cur = conn.cursor()
+
+    # Execute query
+    cur.execute("SELECT gp.GameID, Status, PlayerNumber, Score, CASE WHEN maxscore = score THEN 'Winner' ELSE 'Loser' END AS Result \
+    , CASE WHEN maxscore = score THEN 1 ELSE 0 END AS WinCount \
+    FROM GamerunPlayers gp \
+    JOIN (SELECT GameID, max(score) as maxscore \
+    FROM GamerunPlayers g \
+	GROUP BY GameID) mg \
+	ON gp.GameID = mg.GameID \
+    WHERE CASE WHEN maxscore = score THEN 'Winner' ELSE 'Loser' END = 'Winner' AND Status = 'Completed' \
+     ORDER BY GameID")
+    results = cur.fetchall()
+
+    if not results:
+        print("All games are either in progress, or have yet to be started. Please try again later.")
+        cur.close()
+        return
+
+     # GameID, Status, PlayerNumber, Score, Result, WinCount
+    print(
+    f"\n{'GameID':<8} {'Status':<12} {'PlayerNumber':<14} {'Score':<8} {'Result':<10} {'WinCount':<10}"
+    )
+    print("-" * 80)
+    for result in results:
+        print(
+        f"{result['GameID']:<8} {result['Status']:<12} {result['PlayerNumber']:<14} {result['Score']:<8} {result['Result']:<10} {result['WinCount']:<10}"
+        )
+        
+    cur.close()
+
+def list_player_winloss_history(conn):
+    cur = conn.cursor()
+
+    cur.execute("SELECT PlayerNumber, sum( CASE WHEN maxscore = score THEN 1 ELSE 0 END) AS TotalWins \
+    , sum( CASE WHEN maxscore = score THEN 0 ELSE 1 END) AS TotalLoses \
+    FROM GamerunPlayers gp \
+    JOIN (SELECT GameID, max(score) as maxscore \
+    FROM GamerunPlayers g GROUP BY GameID) mg \
+    ON gp.GameID = mg.GameID \
+    GROUP BY PlayerNumber")
+    players = cur.fetchall()
+
+    if not players:
+        print("There is currently no win/loss history for these players yet.")
+        cur.close()
+        return
+    
+    # PlayerNumber, TotalWins, TotalLoses
+
+    print(
+        f"\n{'PlayerNumber':<15} {'TotalWins':<12} {'TotalLoses':<12}"
+    )
+    print("-" * 80)
+    for player in players:
+        print(
+            f"{player['PlayerNumber']:<15} {player['TotalWins']:<12} {player['TotalLoses']:<12}"
         )
 
     cur.close()
