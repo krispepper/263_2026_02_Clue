@@ -59,7 +59,7 @@ def main():
 
         match choice:
             case "1":
-                player_manager_menu(conn)
+                characters_manager_menu(conn)
             case "2":
                 gamerun_manager_menu(conn)
             case "3":
