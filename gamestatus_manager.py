@@ -9,15 +9,12 @@ def gamerun_manager_menu(conn):
     Main menu for maintaining the Gamerun table.
     '''
     print("\n--- Game Run ---")
-    print("1. Game Start (ADD)")
-    print("2. Game End (Delete)")
+    print("1. Game Start (INSERT)")
+    print("2. Game End (DELETE)")
     print("3. List All Game Runs (SELECT)")
-    print("4. Update Game Run")
-    print("5. Dice Roll Update")
-    print("6. Grid Fulfillment Update")
-    print("7. Current Game Run Status Update")
+    print("4. UPDATE Game Run (Roll, Grid, Status, or Won)")
 
-    subchoice = input("Enter your choice (1-7): ").strip()
+    subchoice = input("Enter your choice (1-4): ").strip()
 
     match subchoice:
         case "1":
@@ -27,12 +24,6 @@ def gamerun_manager_menu(conn):
         case "3":
             list_game_runs(conn)
         case "4":
-            update_game_run(conn)
-        case "5":
-            change_game_run(conn)
-        case "6":
-            update_game_run(conn)
-        case "7":
             update_game_run(conn)
         case _:
             print("Invalid choice.")
@@ -46,8 +37,8 @@ def add_game_run(conn):
     start = input("Enter Start datetime (YYYY-MM-DD HH:MM:SS): ").strip()
     end = input("Enter End datetime (or leave blank): ").strip()
     won = input("Enter Won (0 or 1): ").strip()
-    status = input("Enter Status: ").strip()
-    dice = input("Enter Dice Roll: ").strip()
+    status = input("Enter Status (Ready, In Progress, Completed): ").strip()
+    dice = input("Enter Dice Roll (1-6): ").strip()
     grid = input("Enter Official Grid: ").strip()
 
     query = """
@@ -107,13 +98,7 @@ def list_game_runs(conn):
 
     cur.close()
 
-
 def update_game_run(conn):
-    print("\n--- Update Game Run (General) ---")
-    change_game_run(conn)
-
-
-def change_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
     start = input("Enter GameID of the Gamerun to update: ").strip()
