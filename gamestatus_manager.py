@@ -42,6 +42,7 @@ def add_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
     print("\n--- Start New Game Run ---")
+    gameid = input("Enter GameID: ").strip()
     start = input("Enter Start datetime (YYYY-MM-DD HH:MM:SS): ").strip()
     end = input("Enter End datetime (or leave blank): ").strip()
     won = input("Enter Won (0 or 1): ").strip()
@@ -50,12 +51,12 @@ def add_game_run(conn):
     grid = input("Enter Official Grid: ").strip()
 
     query = """
-        INSERT INTO Gamerun (Start, End, Won, Status, DiceRoll, OfficialGrid)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO Gamerun (GameID, Start, End, Won, Status, DiceRoll, OfficialGrid)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
 
     try:
-        cur.execute(query, (start, end if end else None, won, status, dice, grid))
+        cur.execute(query, (gameid, start, end if end else None, won, status, dice, grid))
         conn.commit()
         print("Game Run started successfully.")
     except Exception as e:
@@ -67,9 +68,9 @@ def add_game_run(conn):
 def delete_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
-    start = input("Enter Start datetime of Gamerun to delete: ").strip()
+    start = input("Enter GameID of Gamerun to delete: ").strip()
 
-    query = "DELETE FROM Gamerun WHERE Start = %s"
+    query = "DELETE FROM Gamerun WHERE GameID = %s"
 
     try:
         cur.execute(query, (start,))
@@ -115,9 +116,9 @@ def update_game_run(conn):
 def change_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
-    start = input("Enter Start datetime of the Gamerun to update: ").strip()
+    start = input("Enter GameID of the Gamerun to update: ").strip()
 
-    cur.execute("SELECT * FROM Gamerun WHERE Start = %s", (start,))
+    cur.execute("SELECT * FROM Gamerun WHERE GameID = %s", (start,))
     row = cur.fetchone()
 
     if not row:
@@ -154,7 +155,7 @@ def change_game_run(conn):
     field = field_map[choice]
     new_value = input(f"Enter new value for {field}: ").strip()
 
-    query = f"UPDATE Gamerun SET {field} = %s WHERE Start = %s"
+    query = f"UPDATE Gamerun SET {field} = %s WHERE GameID = %s"
 
     try:
         cur.execute(query, (new_value, start))
