@@ -9,9 +9,9 @@ def gamerun_manager_menu(conn):
     Main menu for maintaining the Gamerun table.
     '''
     print("\n--- Game Run ---")
-    print("1. Game Start")
+    print("1. Game Start (ADD)")
     print("2. Game End (Delete)")
-    print("3. List All Game Runs")
+    print("3. List All Game Runs (SELECT)")
     print("4. Update Game Run")
     print("5. Dice Roll Update")
     print("6. Grid Fulfillment Update")
