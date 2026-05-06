@@ -6,7 +6,7 @@
 
 def mplayer_stats_menu(conn):
     print("\n--- Game Run Reports ---")
-    print("1. Game Runs With Player Score Stats (Complex) ")
+    print("1. Ended Game Runs With Player Score Stats (Complex) ")
     print("2. Game Runs Player Counts (LEFT JOIN)")
     print("3. Statuses Appearing More Than Once (HAVING)")
     print("4. Game Runs Longer Than Average Duration (SUBQUERY)")
@@ -16,7 +16,7 @@ def mplayer_stats_menu(conn):
 
     match subchoice:
         case "1":
-            query_gamerun_score_connections(conn)
+            query_score_connections(conn)
         case "2":
             query_player_count(conn)
         case "3":
@@ -28,39 +28,42 @@ def mplayer_stats_menu(conn):
         case _:
             print("Invalid choice. Please try again.")
 
-def query_gamerun_score_connections(conn):
+def query_score_connections(conn):
     cur = conn.cursor(dictionary=True)
 
     query = """
-       SELECT 
-    g.GameID,
-    g.Start,
-    g.End,
-    g.Won,
-    g.Status,
-    g.Score,
-    (SELECT COUNT(*) 
-     FROM Players p2 
-     WHERE p2.Score = g.Score) AS PlayersWithThisScore,
-    COUNT(p.PlayerNumber) AS PlayersLinked
-FROM Gamerun g
-LEFT OUTER JOIN Players p 
-    ON g.Score = p.Score
-GROUP BY 
-    g.GameID, g.Start, g.End, g.Won, g.Status, g.Score
-HAVING 
-    (SELECT COUNT(*) 
-     FROM Players p2 
-     WHERE p2.Score = g.Score) > 1
-ORDER BY g.Score;
+        SELECT 
+            g.GameID,
+            g.Start,
+            g.End,
+            g.Won,
+            g.Status,
+            p.Score,
+            (SELECT COUNT(*) 
+             FROM Players p2 
+             WHERE p2.Score = p.Score) AS PlayersWithThisScore,
+            COUNT(gp.PlayerNumber) AS PlayersLinked
+        FROM Gamerun g
+        LEFT OUTER JOIN GamerunPlayers gp 
+            ON g.GameID = gp.GameID
+        LEFT OUTER JOIN Players p
+            ON gp.PlayerNumber = p.PlayerNumber
+        WHERE g.Status = 'Completed'
+        GROUP BY 
+            g.GameID, g.Start, g.End, g.Won, g.Status, p.Score
+        HAVING 
+            (SELECT COUNT(*) 
+             FROM Players p2 
+             WHERE p2.Score = p.Score) > 1
+        ORDER BY p.Score;
     """
 
     cur.execute(query)
     rows = cur.fetchall()
 
-    print("\n--- Games Connected by Player Score (JOIN + HAVING + SUBQUERY) ---")
+    print("\n--- Finished Games by Player Scores --- ")
     print("GameID | Score | PlayersWithThisScore | PlayersLinked")
-    print("-" * 70)
+    print("-" * 75)
 
     for row in rows:
         print(f"{row['GameID']} | {row['Score']} | "
@@ -76,7 +79,7 @@ def query_player_count(conn):
                g.Status,
                g.Start,
                g.End,
-               COUNT(gp.PlayerID) AS NumPlayers
+               COUNT(gp.PlayerNumber) AS NumPlayers
         FROM Gamerun g
         LEFT OUTER JOIN GamerunPlayers gp
             ON g.GameID = gp.GameID
