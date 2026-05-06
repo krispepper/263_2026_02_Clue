@@ -52,7 +52,7 @@ def main():
         print("1. Maintain Player")
         print("2. Monitor Game Run")
         print("3. Maintain Leaderboard")
-        print("4. Player Stats from Game Run")
+        print("4. Game Run With Player Score Stats")
         print("5. Exit")
 
         choice = input("Enter your choice (1-5): ").strip()
