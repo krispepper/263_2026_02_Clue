@@ -22,6 +22,16 @@ from Leaderboard_manager import (
     leaderboard_manager_menu
 )
 
+#module to mange a table for Madeline
+from gamestatus_manager import (
+    gamerun_manager_menu
+)
+
+#Player stats for gamerun queries
+from stats_madelinestaley import(
+    mplayer_stats_menu
+)
+
 #module to run queries
 from player_status import (
     player_stats_menu
@@ -42,18 +52,21 @@ def main():
         print("1. Maintain Player")
         print("2. Monitor Game Run")
         print("3. Maintain Leaderboard")
-        print("4. Exit")
+        print("4. Player Stats from Game Run")
+        print("5. Exit")
 
-        choice = input("Enter your choice (1-4): ").strip()
+        choice = input("Enter your choice (1-5): ").strip()
 
         match choice:
             case "1":
                 player_manager_menu(conn)
             case "2":
-                player_stats_menu(conn)
+                gamerun_manager_menu(conn)
             case "3":
                 leaderboard_manager_menu(conn)
             case "4":
+                mplayer_stats_menu(conn)
+            case "5":
                 print("Goodbye!")
                 break
             case _:
