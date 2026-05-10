@@ -345,7 +345,7 @@ def list_board_for_game(conn):
 
 def list_end_game_results(conn):
     # Activate cursor
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
 
     # Execute query
     cur.execute("SELECT gp.GameID, Status, PlayerNumber, Score, CASE WHEN maxscore = score THEN 'Winner' ELSE 'Loser' END AS Result \
@@ -377,7 +377,7 @@ def list_end_game_results(conn):
     cur.close()
 
 def list_player_winloss_history(conn):
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
 
     cur.execute("SELECT PlayerNumber, sum( CASE WHEN maxscore = score THEN 1 ELSE 0 END) AS TotalWins \
     , sum( CASE WHEN maxscore = score THEN 0 ELSE 1 END) AS TotalLoses \
@@ -386,9 +386,9 @@ def list_player_winloss_history(conn):
     FROM GamerunPlayers g GROUP BY GameID) mg \
     ON gp.GameID = mg.GameID \
     GROUP BY PlayerNumber")
-    players = cur.fetchall()
+    characters = cur.fetchall()
 
-    if not players:
+    if not characters:
         print("There is currently no win/loss history for these players yet.")
         cur.close()
         return
@@ -399,9 +399,8 @@ def list_player_winloss_history(conn):
         f"\n{'PlayerNumber':<15} {'TotalWins':<12} {'TotalLoses':<12}"
     )
     print("-" * 80)
-    for player in players:
+    for character in characters:
         print(
-            f"{player['PlayerNumber']:<15} {player['TotalWins']:<12} {player['TotalLoses']:<12}"
+            f"{character['PlayerNumber']:<15} {character['TotalWins']:<12} {character['TotalLoses']:<12}"
         )
-
     cur.close()
