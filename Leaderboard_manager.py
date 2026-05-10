@@ -36,19 +36,19 @@ def add_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
     print("\n=== Add Leaderboard Entry ===")
-    player_id = input("Enter Player ID: ").strip()
+    player_number = input("Enter Player Number: ").strip()
     username = input("Enter Username: ").strip() # Fixed: Added missing input
     total_score = input("Enter Total Score: ").strip()
     games_played = input("Enter Games Played: ").strip()
     rank = input("Enter Rank: ").strip()
 
     query = """
-        INSERT INTO Leaderboard (PlayerID, Username, TotalScore, GamesPlayed, `Rank`)
+        INSERT INTO Leaderboard (PlayerNumber, Username, TotalScore, GamesPlayed, `Rank`)
         VALUES (%s, %s, %s, %s, %s)
     """
 
     try:
-        cur.execute(query, (player_id, username, total_score, games_played, rank))
+        cur.execute(query, (player_number, username, total_score, games_played, rank))
         conn.commit()
         print("Leaderboard entry added successfully.")
     except Exception as e:
@@ -59,8 +59,8 @@ def add_game_run(conn):
 def change_game_run(conn):
     cur = conn.cursor(dictionary=True)
 
-    player_id = input("Enter Player ID to update: ").strip()
-    cur.execute("SELECT * FROM Leaderboard WHERE PlayerID = %s", (player_id,))
+    player_number = input("Enter Player Number to update: ").strip()
+    cur.execute("SELECT * FROM Leaderboard WHERE PlayerNumber = %s", (player_number,))
     row = cur.fetchone()
 
     if not row:
@@ -95,10 +95,10 @@ def change_game_run(conn):
     field = field_map[choice]
     new_value = input("Enter new value: ").strip()
 
-    query = f"UPDATE Leaderboard SET `{field}` = %s WHERE PlayerID = %s"
+    query = f"UPDATE Leaderboard SET `{field}` = %s WHERE PlayerNumber = %s"
 
     try:
-        cur.execute(query, (new_value, player_id))
+        cur.execute(query, (new_value, player_number))
         conn.commit()
         print(f"{field} updated successfully.")
     except Exception as e:
@@ -119,15 +119,15 @@ def delete_game_run(conn, clear_all=False):
             except Exception as e:
                 print("Error clearing leaderboard:", e)
     else:
-        player_id = input("Enter Player ID to delete: ").strip()
+        player_number = input("Enter Player Number to delete: ").strip()
         confirm = input("Confirm: ").strip().lower()
         if confirm != "yes":
             print("Delete cancelled.")
             cur.close()
             return
-        query = "DELETE FROM Leaderboard WHERE PlayerID = %s"
+        query = "DELETE FROM Leaderboard WHERE PlayerNumber = %s"
         try:
-            cur.execute(query, (player_id,))
+            cur.execute(query, (player_number,))
             conn.commit()
             if cur.rowcount > 0:
                 print("Entry deleted.")
@@ -148,19 +148,19 @@ def list_game_runs(conn):
         cur.close()
         return
 
-    print("\nRank | PlayerID | Username     | Total Score | Games Played")
+    print("\nRank | PlayerNumber | Username     | Total Score | Games Played")
     print("----------------------------------------------------------------------")
     for row in rows:
-        print(f"{row['Rank']}    | {row['PlayerID']}      | {row['Username']}  | {row['TotalScore']}        | {row['GamesPlayed']}")
+        print(f"{row['Rank']}    | {row['PlayerNumber']}      | {row['Username']}  | {row['TotalScore']}        | {row['GamesPlayed']}")
     cur.close()
 
 def update_game_score(conn):
     cur = conn.cursor(dictionary=True)
-    player_id = input("Enter Player ID: ").strip()
+    player_number = input("Enter Player Number: ").strip()
     new_rank = input("Enter new Rank: ").strip()
 
     try:
-        cur.callproc("UpdatePlayerRank", (player_id, new_rank))
+        cur.callproc("UpdatePlayerRank", (player_number, new_rank))
         conn.commit()
         print("Player rank updated successfully.")
     except Exception as e:
@@ -173,7 +173,7 @@ def ensure_leaderboard_table(conn):
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS Leaderboard (
-            PlayerID INT PRIMARY KEY,
+            PlayerNumber INT PRIMARY KEY,
             Username VARCHAR(100),
             TotalScore INT,
             GamesPlayed INT,
@@ -190,9 +190,9 @@ def ensure_update_rank_procedure(conn):
     try:
         cur.execute(
             """
-            CREATE PROCEDURE IF NOT EXISTS UpdatePlayerRank(IN p_player_id INT, IN p_new_rank INT)
+            CREATE PROCEDURE IF NOT EXISTS UpdatePlayerRank(IN p_player_number INT, IN p_new_rank INT)
             BEGIN
-                UPDATE Leaderboard SET `Rank` = p_new_rank WHERE PlayerID = p_player_id;
+                UPDATE Leaderboard SET `Rank` = p_new_rank WHERE PlayerNumber = p_player_number;
             END
             """
         )
